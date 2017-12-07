@@ -1,5 +1,6 @@
 #define len(coll_ptr) (sizeof(coll_ptr)/sizeof(coll_ptr[0]))
 #define alloc_float(num_elems) ((float*) malloc(num_elems * sizeof(float)))
+#define rand_f() ((float)rand()/(float)(RAND_MAX))
 
 typedef float* (*float_p_float_p_fptr)(float*);
 
@@ -25,7 +26,7 @@ float calc_norm_squared_in(float* vec, float* mat, int vec_length);
 
 void update_particle(systemModel model, float* current_state_estimate, float* current_measurement);
 
-void pf(float* result, float* measurements, systemModel model, int num_particles);
+float* pf(float* measurements, systemModel model, int num_samples, int num_particles);
 
 void vec_mutate_divide(float* vec, float divisor, int length);
 

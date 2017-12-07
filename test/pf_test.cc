@@ -114,4 +114,16 @@ namespace {
     }
 
 
+    TEST(Resample, Any) {
+        float* particles = alloc_float(4);
+        particles[0] = 2.0f;
+        particles[1] = 3.0f;
+        particles[2] = 5.0f;
+        particles[3] = 1.0f;
+        float weights[] = {0.3f, 0.7f};
+        float* resampled_particles = resample_particles(particles, weights, 2, 2);
+        EXPECT_TRUE(resampled_particles != particles);
+    }
+
+
 }

@@ -103,6 +103,23 @@ float calc_unnormalized_importance_weight(systemModel model, float* current_stat
     free(error);
     return unnormalized_weight;
 }
+
+float* resample_particles(float* particles, float* weights, int num_particles, int num_state_variables) {
+    float* resampled_particles = alloc_float(num_particles * num_state_variables);
+    float* reference = cumsum(weights, num_particles * num_state_variables);
+    for (int index = 0; index < num_particles; index++) {
+        float uniform_sample = (index + rand_f()) / num_particles;
+        int sum_index = 0;
+        while (reference[sum_index] < uniform_sample) {
+            sum_index++;
+        }
+        memcpy(&resampled_particles[index * num_state_variables],
+               &particles[sum_index * num_state_variables],
+               num_state_variables * sizeof(float));
+    }
+    free(particles);
+    free(reference);
+    return resampled_particles;
 }
 
 float* initialize_particles(float* initial_state, float num_particles) {
