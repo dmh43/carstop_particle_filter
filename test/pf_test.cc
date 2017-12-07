@@ -6,6 +6,9 @@
 #include "../src/pf.h"
 namespace {
 
+    float* estimate_measurement(float* vec) {return vec;}
+    float* estimate_odometry(float* vec) {return vec;}
+
     bool eq(float* vec1, float* vec2, int length) {
         bool acc = true;
         for (int i = 0; i < length; i++) {
@@ -58,17 +61,56 @@ namespace {
     TEST(CalcNormSquaredIn, Ones) {
         float vec[] = {1.0f, 1.0f};
         float mat[] = {1.0f, 1.0f, 1.0f, 1.0f};
-        EXPECT_EQ(calc_norm_squared_in(vec, mat, 2, 2), 4);
+        EXPECT_EQ(calc_norm_squared_in(vec, mat, 2), 4);
     }
 
 
     TEST(CalcUnnormalizedImportanceWeight, White) {
-        float error[] = {1.0f, 1.0f};
+        float initial_state[] = {1.0f, 1.0f};
         float cov[] = {1.0f, 0.0f, 0.0f, 1.0f};
-        EXPECT_FLOAT_EQ(calc_unnormalized_importance_weight(error, cov), M_E);
+        systemModel model = {2, 2, initial_state, cov, cov, cov, cov, estimate_measurement, estimate_odometry};
+        float current_estimate[] = {0.0f, 0.0f};
+        EXPECT_FLOAT_EQ(calc_unnormalized_importance_weight(model, current_estimate, initial_state), M_E);
 
-        float no_error[] = {0.0f, 0.0f};
-        EXPECT_FLOAT_EQ(calc_unnormalized_importance_weight(no_error, cov), 1);
+        float current_estimate_exact[] = {1.0f, 1.0f};
+        EXPECT_FLOAT_EQ(calc_unnormalized_importance_weight(model, current_estimate_exact, initial_state), 1);
+    }
+
+
+    TEST(VecMutateDivide, One) {
+        float vec[] = {2.0f, 3.0f};
+        vec_mutate_divide(vec, 1.0, 2);
+        EXPECT_TRUE(eq(vec, vec, 2));
+    }
+
+
+    TEST(VecMutateDivide, Two) {
+        float vec[] = {2.0f, 3.0f};
+        vec_mutate_divide(vec, 2.0, 2);
+        float result[] = {1.0f, 1.5f};
+        EXPECT_TRUE(eq(vec, result, 2));
+    }
+
+
+    TEST(Sum, Any) {
+        float vec[] = {2.0f, 3.0f};
+        EXPECT_FLOAT_EQ(sum(vec, 2), 5);
+    }
+
+
+    TEST(Cumsum, Any) {
+        float vec[] = {2.0f, 3.0f, 5.0f};
+        float result[] = {2.0f, 5.0f, 10.0f};
+        EXPECT_TRUE(eq(cumsum(vec, 3), result, 3));
+    }
+
+
+    TEST(VecMutateAdd, Any) {
+        float vec1[] = {2.0f, 3.0f, 5.0f};
+        float vec2[] = {1.0f, 2.0f, 3.0f};
+        vec_mutate_add(vec1, vec2, 3);
+        float result[] = {3.0f, 5.0f, 8.0f};
+        EXPECT_TRUE(eq(vec1, result, 3));
     }
 
 
