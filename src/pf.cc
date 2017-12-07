@@ -31,7 +31,7 @@ float* mat_vec_mul(float* mat, float* vec, int input_length, int result_length) 
     return result;
 }
 
-float calc_norm_in(float* vec, float* mat, int vec_length, int result_length) {
+float calc_norm_squared_in(float* vec, float* mat, int vec_length, int result_length) {
     float* first_product_result = mat_vec_mul(mat, vec, vec_length, result_length);
     float result = inner_product(first_product_result, vec, result_length);
     free(first_product_result);
@@ -39,10 +39,10 @@ float calc_norm_in(float* vec, float* mat, int vec_length, int result_length) {
 }
 
 float calc_unnormalized_importance_weight(float* error, float* measurement_noise_covariance_inv) {
-    return exp(0.5 * calc_norm_in(error,
-                                  measurement_noise_covariance_inv,
-                                  NUM_MEASUREMENT_VARIABLES,
-                                  NUM_MEASUREMENT_VARIABLES));
+    return exp(0.5 * calc_norm_squared_in(error,
+                                          measurement_noise_covariance_inv,
+                                          NUM_MEASUREMENT_VARIABLES,
+                                          NUM_MEASUREMENT_VARIABLES));
 }
 
 void update_particle(systemModel model, float* current_state_estimate, float* current_measurement) {

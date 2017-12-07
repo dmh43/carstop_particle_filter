@@ -1,3 +1,6 @@
 /googletest/
+/googlemock/
 build/gtest*
 *.o
+/build/pf_test
+/build/gmock_main.a

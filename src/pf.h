@@ -18,7 +18,7 @@ float* vec_subtract(float* vec1, float* vec2, int length);
 
 float* mat_vec_mul(float* mat, float* vec, int input_length, int result_length);
 
-float calc_norm_in(float* vec, float* mat, int vec_length, int result_length);
+float calc_norm_squared_in(float* vec, float* mat, int vec_length, int result_length);
 
 float calc_unnormalized_importance_weight(float* error, float* measurement_noise_covariance_inv);
 
