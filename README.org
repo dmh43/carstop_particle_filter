@@ -1,0 +1,8 @@
+* Tests
+The tests use the googletest and googlemock libraries. Copy those directories into the root of this project.
+Run tests with:
+#+BEGIN_SRC bash
+cd build
+make
+./pf_test
+#+END_SRC
