@@ -1,4 +1,5 @@
-* Tests
+* Carstop C++ Particle Filter
+** Tests
 The tests use the googletest and googlemock libraries. Copy those directories into the root of this project.
 Run tests with:
 #+BEGIN_SRC bash

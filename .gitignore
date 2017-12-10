@@ -4,3 +4,6 @@ build/gtest*
 *.o
 /build/pf_test
 /build/gmock_main.a
+/out/pf.dat
+/out/plot.ps
+/build/demo
