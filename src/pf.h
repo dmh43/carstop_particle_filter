@@ -13,7 +13,7 @@ typedef struct systemModel {
     float* measurement_noise_covariance_inv;
     float* process_noise_covariance_sqrt;
     float_p_float_p_fptr estimate_measurement;
-    float_p_float_p_fptr estimate_odometry;
+    float_p_float_p_fptr step_process;
 } systemModel;
 
 float inner_product(float* vec1, float* vec2, int length);
@@ -46,7 +46,7 @@ float calc_unnormalized_importance_weight(systemModel model, float* current_stat
 
 void update_importance_weights(float* weights, systemModel model, float* current_measurement, float* particles, int num_particles);
 
-void update_estimates(float* estimates, int estimate_index, float* weights, float* particles, int num_particles, int num_state_variables);
+void update_estimates(float* estimate, float* weights, float* particles, int num_particles, int num_state_variables);
 
 float* resample_particles(float* particles, float* weights, int num_particles, int num_state_variables);
 

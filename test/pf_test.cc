@@ -6,8 +6,16 @@
 #include "../src/pf.h"
 namespace {
 
-    float* estimate_measurement(float* vec) {return vec;}
-    float* estimate_odometry(float* vec) {return vec;}
+    float* estimate_measurement(float* vec) {
+        float* result = alloc_float(2);
+        memcpy(result, vec, 2 * sizeof(float));
+        return result;
+    }
+    float* step_process(float* vec) {
+        float* result = alloc_float(2);
+        memcpy(result, vec, 2 * sizeof(float));
+        return result;
+    }
 
     bool eq(float* vec1, float* vec2, int length) {
         bool acc = true;
@@ -68,7 +76,7 @@ namespace {
     TEST(CalcUnnormalizedImportanceWeight, White) {
         float initial_state[] = {1.0f, 1.0f};
         float cov[] = {1.0f, 0.0f, 0.0f, 1.0f};
-        systemModel model = {2, 2, initial_state, cov, cov, cov, cov, estimate_measurement, estimate_odometry};
+        systemModel model = {2, 2, initial_state, cov, cov, cov, cov, estimate_measurement, step_process};
         float current_estimate[] = {0.0f, 0.0f};
         EXPECT_FLOAT_EQ(calc_unnormalized_importance_weight(model, current_estimate, initial_state), M_E);
 
@@ -114,6 +122,21 @@ namespace {
     }
 
 
+    TEST(AddNoise, Any) {
+        float vec[] = {2.0f, 3.0f, 5.0f};
+        float noise_cov_sqrt[] = {sqrt(0.1f), 0.0f, 0.0f,
+                                  0.0f, sqrt(0.1f), 0.0f,
+                                  0.0f, 0.0f, sqrt(0.1f)};
+        add_noise(vec, noise_cov_sqrt, 3);
+        EXPECT_LT(vec[0], 3.0);
+        EXPECT_GT(vec[0], 1.0);
+        EXPECT_LT(vec[1], 4.0);
+        EXPECT_GT(vec[1], 2.0);
+        EXPECT_LT(vec[2], 6.0);
+        EXPECT_GT(vec[2], 4.0);
+    }
+
+
     TEST(Resample, Any) {
         float* particles = alloc_float(4);
         particles[0] = 2.0f;
@@ -125,5 +148,38 @@ namespace {
         EXPECT_TRUE(resampled_particles != particles);
     }
 
+
+    TEST(PF, Simple) {
+        float initial_state[] = {1.0f, 1.0f};
+        float cov[] = {1.0f, 0.0f, 0.0f, 1.0f};
+        systemModel model = {2, 2, initial_state, cov, cov, cov, cov, estimate_measurement, step_process};
+        int num_samples = 3;
+        int num_particles = 3;
+        float measurements[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+        float result[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+        float* val = pf(measurements, model, num_samples, num_particles);
+        printf("%f\n", val[0]);
+        printf("%f\n", val[1]);
+        printf("%f\n", val[2]);
+        printf("%f\n", val[3]);
+        printf("%f\n", val[4]);
+        printf("%f\n", val[5]);
+        EXPECT_TRUE(eq(val, result, 6));
+    }
+
+
+    TEST(PF, TwoSimple) {
+        float initial_state[] = {1.0f, 1.0f};
+        float cov[] = {0.01f, 0.0f, 0.0f, 0.01f};
+        systemModel model = {2, 2, initial_state, cov, cov, cov, cov, estimate_measurement, step_process};
+        int num_samples = 1;
+        int num_particles = 1;
+        float measurements[] = {1.0f, 10.0f};
+        float result[] = {0.0f, 0.0f};
+        float* val = pf(measurements, model, num_samples, num_particles);
+        printf("%f\n", val[0]);
+        printf("%f\n", val[1]);
+        EXPECT_TRUE(eq(val, result, 1));
+    }
 
 }

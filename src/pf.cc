@@ -97,46 +97,44 @@ void add_noise(float* vec, float* noise_covariance_sqrt, int length) {
 float calc_unnormalized_importance_weight(systemModel model, float* current_state_estimate, float* current_measurement) {
     float* predicted_measurement = model.estimate_measurement(current_state_estimate);
     float* error = vec_subtract(current_measurement, predicted_measurement, model.num_measurement_variables);
-    float unnormalized_weight = exp(0.5 * calc_norm_squared_in(error,
-                                                               model.measurement_noise_covariance_inv,
-                                                               model.num_measurement_variables));
+    float unnormalized_weight = exp(-0.5 * calc_norm_squared_in(error,
+                                                                model.measurement_noise_covariance_inv,
+                                                                model.num_measurement_variables));
     free(error);
+    free(predicted_measurement);
     return unnormalized_weight;
 }
 
 void update_importance_weights(float* weights, systemModel model, float* current_measurement, float* particles, int num_particles) {
-    for (int particle_index = 0; particle_index < num_particles; particle_index += model.num_state_variables) {
-        float* current_state_estimate = &particles[particle_index];
-        weights[particle_index] = calc_unnormalized_importance_weight(model,
-                                                                      current_state_estimate,
-                                                                      current_measurement);
+    for (int weight_index = 0; weight_index < num_particles; weight_index++) {
+        float* current_state_estimate = &particles[weight_index * model.num_state_variables];
+        weights[weight_index] = calc_unnormalized_importance_weight(model,
+                                                                    current_state_estimate,
+                                                                    current_measurement);
     }
     vec_mutate_divide(weights, sum(weights, num_particles), num_particles);
 }
 
-void update_estimates(float* estimates, int estimate_index, float* weights, float* particles, int num_particles, int num_state_variables) {
-    float* avg = &estimates[estimate_index];
-    for (int particle_index = 0; particle_index < num_particles; particle_index += num_state_variables) {
-        for (int variable_index = 0; variable_index < num_state_variables; variable_index++) {
-            if (variable_index == 0) {
-                avg[variable_index] = 0;
-            }
-            avg[variable_index] += weights[particle_index] * particles[particle_index + variable_index];
+void update_estimates(float* estimate, float* weights, float* particles, int num_particles, int num_state_variables) {
+    for (int variable_index = 0; variable_index < num_state_variables; variable_index++) {
+        estimate[variable_index] = 0;
+        for (int weight_index = 0; weight_index < num_particles; weight_index++) {
+            estimate[variable_index] += weights[weight_index] * particles[weight_index * num_state_variables + variable_index];
         }
     }
 }
 
 float* resample_particles(float* particles, float* weights, int num_particles, int num_state_variables) {
     float* resampled_particles = alloc_float(num_particles * num_state_variables);
-    float* reference = cumsum(weights, num_particles * num_state_variables);
-    for (int index = 0; index < num_particles; index += num_state_variables) {
-        float uniform_sample = (index + rand_f()) / num_particles;
+    float* reference = cumsum(weights, num_particles);
+    for (int weight_index = 0; weight_index < num_particles; weight_index++) {
+        float uniform_sample = (weight_index + rand_f()) / num_particles;
         int sum_index = 0;
         while (reference[sum_index] < uniform_sample) {
-            sum_index += num_state_variables;
+            sum_index++;
         }
-        memcpy(&resampled_particles[index],
-               &particles[sum_index],
+        memcpy(&resampled_particles[weight_index * num_state_variables],
+               &particles[sum_index * num_state_variables],
                num_state_variables * sizeof(float));
     }
     free(particles);
@@ -145,17 +143,18 @@ float* resample_particles(float* particles, float* weights, int num_particles, i
 }
 
 void predict_particles_step(systemModel model, float* particles, int num_particles) {
-    for (int particle_index = 0; particle_index < num_particles; particle_index += model.num_state_variables) {
+    for (int particle_index = 0; particle_index < num_particles * model.num_state_variables; particle_index += model.num_state_variables) {
         float* particle = &particles[particle_index];
-        float* odometry_estimate = model.estimate_odometry(particle);
-        add_noise(odometry_estimate, model.process_noise_covariance_sqrt, model.num_state_variables);
-        memcpy(particle, odometry_estimate, model.num_state_variables * sizeof(float));
+        float* process_estimate = model.step_process(particle);
+        add_noise(process_estimate, model.process_noise_covariance_sqrt, model.num_state_variables);
+        memcpy(particle, process_estimate, model.num_state_variables * sizeof(float));
+        free(process_estimate);
     }
 }
 
 float* initialize_particles(systemModel model, int num_particles) {
     float* particles = alloc_float(num_particles * model.num_state_variables);
-    for (int particle_index = 0; particle_index < num_particles; particle_index += model.num_state_variables) {
+    for (int particle_index = 0; particle_index < num_particles * model.num_state_variables; particle_index += model.num_state_variables) {
         float* particle = &particles[particle_index];
         memcpy(particle, model.initial_state, model.num_state_variables * sizeof(float));
         add_noise(particle, model.initial_state_covariance_sqrt, model.num_state_variables);
@@ -167,10 +166,10 @@ float* pf(float* measurements, systemModel model, int num_samples, int num_parti
     float* particles = initialize_particles(model, num_particles);
     float* weights = alloc_float(num_particles);
     float* estimates = alloc_float(num_samples * model.num_state_variables);
-    for (int sample_index = 0; sample_index < num_samples; sample_index += model.num_measurement_variables) {
+    for (int sample_index = 0; sample_index < num_samples * model.num_measurement_variables; sample_index += model.num_measurement_variables) {
         float* current_measurement = &measurements[sample_index];
         update_importance_weights(weights, model, current_measurement, particles, num_particles);
-        update_estimates(estimates, sample_index, weights, particles, num_particles, model.num_state_variables);
+        update_estimates(&estimates[sample_index], weights, particles, num_particles, model.num_state_variables);
         particles = resample_particles(particles, weights, num_particles, model.num_state_variables);
         predict_particles_step(model, particles, num_particles);
     }
