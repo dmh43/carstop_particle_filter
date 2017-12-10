@@ -166,10 +166,10 @@ float* pf(float* measurements, systemModel model, int num_samples, int num_parti
     float* particles = initialize_particles(model, num_particles);
     float* weights = alloc_float(num_particles);
     float* estimates = alloc_float(num_samples * model.num_state_variables);
-    for (int sample_index = 0; sample_index < num_samples * model.num_measurement_variables; sample_index += model.num_measurement_variables) {
-        float* current_measurement = &measurements[sample_index];
+    for (int sample_index = 0; sample_index < num_samples; sample_index++) {
+        float* current_measurement = &measurements[sample_index * model.num_measurement_variables];
         update_importance_weights(weights, model, current_measurement, particles, num_particles);
-        update_estimates(&estimates[sample_index], weights, particles, num_particles, model.num_state_variables);
+        update_estimates(&estimates[sample_index * model.num_state_variables], weights, particles, num_particles, model.num_state_variables);
         particles = resample_particles(particles, weights, num_particles, model.num_state_variables);
         predict_particles_step(model, particles, num_particles);
     }
