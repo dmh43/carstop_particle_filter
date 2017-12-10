@@ -34,7 +34,7 @@ CXXFLAGS += -g -Wall -Wextra -pthread
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = pf_test
+TESTS = pf_test demo
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -98,4 +98,11 @@ pf_test.o : $(TEST_DIR)/pf_test.cc \
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(TEST_DIR)/pf_test.cc
 
 pf_test : pf.o pf_test.o gmock_main.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+
+demo.o : $(USER_DIR)/demo.cc $(USER_DIR)/demo.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/demo.cc
+
+demo : demo.o pf.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
