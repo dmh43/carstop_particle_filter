@@ -1,0 +1,10 @@
+set xlabel "Iteration"
+set ylabel "Mag"
+plot "pf.dat" u 1:2 t 'True X' with lines, \
+     "pf.dat" u 1:3 t 'True Y' with lines, \
+     "pf.dat" u 1:4 t 'Estimate X' with lines, \
+     "pf.dat" u 1:5 t 'Estimate Y' with linespoints
+set term postscript
+set output "plot.ps"
+replot
+pause -1
