@@ -78,7 +78,7 @@ namespace {
         float cov[] = {1.0f, 0.0f, 0.0f, 1.0f};
         systemModel model = {2, 2, initial_state, cov, cov, cov, cov, estimate_measurement, step_process};
         float current_estimate[] = {0.0f, 0.0f};
-        EXPECT_FLOAT_EQ(calc_unnormalized_importance_weight(model, current_estimate, initial_state), M_E);
+        EXPECT_FLOAT_EQ(calc_unnormalized_importance_weight(model, current_estimate, initial_state), 1.0 / M_E);
 
         float current_estimate_exact[] = {1.0f, 1.0f};
         EXPECT_FLOAT_EQ(calc_unnormalized_importance_weight(model, current_estimate_exact, initial_state), 1);
@@ -146,40 +146,6 @@ namespace {
         float weights[] = {0.3f, 0.7f};
         float* resampled_particles = resample_particles(particles, weights, 2, 2);
         EXPECT_TRUE(resampled_particles != particles);
-    }
-
-
-    TEST(PF, Simple) {
-        float initial_state[] = {1.0f, 1.0f};
-        float cov[] = {1.0f, 0.0f, 0.0f, 1.0f};
-        systemModel model = {2, 2, initial_state, cov, cov, cov, cov, estimate_measurement, step_process};
-        int num_samples = 3;
-        int num_particles = 3;
-        float measurements[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-        float result[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-        float* val = pf(measurements, model, num_samples, num_particles);
-        printf("%f\n", val[0]);
-        printf("%f\n", val[1]);
-        printf("%f\n", val[2]);
-        printf("%f\n", val[3]);
-        printf("%f\n", val[4]);
-        printf("%f\n", val[5]);
-        EXPECT_TRUE(eq(val, result, 6));
-    }
-
-
-    TEST(PF, TwoSimple) {
-        float initial_state[] = {1.0f, 1.0f};
-        float cov[] = {0.01f, 0.0f, 0.0f, 0.01f};
-        systemModel model = {2, 2, initial_state, cov, cov, cov, cov, estimate_measurement, step_process};
-        int num_samples = 1;
-        int num_particles = 1;
-        float measurements[] = {1.0f, 10.0f};
-        float result[] = {0.0f, 0.0f};
-        float* val = pf(measurements, model, num_samples, num_particles);
-        printf("%f\n", val[0]);
-        printf("%f\n", val[1]);
-        EXPECT_TRUE(eq(val, result, 1));
     }
 
 }
